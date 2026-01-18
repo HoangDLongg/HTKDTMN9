@@ -56,3 +56,32 @@ class FarmingLogs(models.Model):
     class Meta:
         managed = False
         db_table = 'farming_logs'
+
+
+class SeasonRegistrations(models.Model):
+    """Farmer registration for planting recommendations"""
+    recommendation = models.ForeignKey('market.PlantingRecommendations', models.CASCADE)
+    farmer = models.ForeignKey('farms.Farmers', models.CASCADE)
+    farm = models.ForeignKey('farms.Farms', models.CASCADE)
+    area_registered = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, default='pending')
+    # Status options: pending, approved, rejected
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    approved_by = models.ForeignKey('core.Users', models.SET_NULL, blank=True, null=True, related_name='approved_registrations')
+    approved_at = models.DateTimeField(blank=True, null=True)
+    season = models.ForeignKey('seasons.Seasons', models.SET_NULL, blank=True, null=True, related_name='registrations')
+    # Link to created season after approval
+
+    class Meta:
+        managed = True  # Django will manage this table
+        db_table = 'season_registrations'
+        unique_together = [['recommendation', 'farmer', 'farm']]
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['recommendation']),
+            models.Index(fields=['farmer']),
+        ]
+
+    def __str__(self):
+        return f"{self.farmer} - {self.farm} ({self.status})"

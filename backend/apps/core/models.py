@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import check_password
 
 
 class Roles(models.Model):
@@ -25,3 +26,21 @@ class Users(models.Model):
     class Meta:
         managed = False
         db_table = 'users'
+    
+    # Required for Django authentication
+    @property
+    def is_authenticated(self):
+        return True
+    
+    @property
+    def is_anonymous(self):
+        return False
+    
+    def check_password(self, raw_password):
+        """Check password using Django's check_password"""
+        return check_password(raw_password, self.password_hash)
+    
+    # For JWT token - needs pk property
+    @property
+    def pk(self):
+        return self.id

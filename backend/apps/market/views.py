@@ -125,3 +125,35 @@ class PlantingRecommendationsViewSet(viewsets.ModelViewSet):
         
         recommendation = MarketPriceService.get_best_selling_time(crop_id, harvest_date)
         return Response(recommendation)
+    
+    @action(detail=False, methods=['get'])
+    def for_location(self, request):
+        """
+        Get crop recommendations based on location
+        
+        GET /api/planting-recommendations/for_location/?farmer_id=1
+        GET /api/planting-recommendations/for_location/?province_id=1
+        GET /api/planting-recommendations/for_location/?province_id=1&district_id=5
+        """
+        from .crop_recommender import CropRecommendationService
+        
+        farmer_id = request.query_params.get('farmer_id')
+        
+        if farmer_id:
+            # Auto-detect location from farmer's farm
+            result = CropRecommendationService.get_recommendations_for_farmer(farmer_id)
+            return Response(result)
+        else:
+            # Use explicit location
+            province_id = request.query_params.get('province_id')
+            district_id = request.query_params.get('district_id')
+            
+            if not province_id:
+                return Response({'error': 'farmer_id or province_id is required'}, status=400)
+            
+            recommendations = CropRecommendationService.get_recommendations_by_location(
+                province_id=province_id,
+                district_id=district_id
+            )
+            
+            return Response({'recommendations': recommendations})

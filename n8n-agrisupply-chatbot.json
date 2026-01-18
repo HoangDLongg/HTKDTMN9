@@ -1,0 +1,340 @@
+{
+  "name": "AgriSupply Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agri-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [48, 1280],
+      "id": "d866cb95-5be3-46ad-9d94-ec574012f99d",
+      "webhookId": "54c3908b-4e0a-40d3-bd2e-6cb3a4e93e8b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $input.item.json.body.message || '';\nconst user_id = $input.item.json.body.user_id || 1;\nconst messageLower = message.toLowerCase();\n\nlet intent = 'faq';\n\n// Giá thị trường\nif (messageLower.includes('giá') || messageLower.includes('price') || messageLower.includes('bao nhiêu')) {\n  intent = 'market_price';\n}\n// Công việc\nelse if (messageLower.includes('hôm nay') || messageLower.includes('công việc') || messageLower.includes('làm gì') || messageLower.includes('task')) {\n  intent = 'daily_tasks';\n}\n// Khuyến nghị\nelse if (messageLower.includes('trồng') || messageLower.includes('khuyến nghị') || messageLower.includes('nên') || messageLower.includes('gợi ý')) {\n  intent = 'recommendations';\n}\n// Vụ mùa\nelse if (messageLower.includes('vụ mùa') || messageLower.includes('mùa vụ') || messageLower.includes('season') || messageLower.includes('tiến độ') || messageLower.includes('thu hoạch')) {\n  intent = 'seasons';\n}\n// Cảnh báo\nelse if (messageLower.includes('cảnh báo') || messageLower.includes('alert') || messageLower.includes('thời tiết') || messageLower.includes('sâu bệnh') || messageLower.includes('nguy hiểm')) {\n  intent = 'alerts';\n}\n// Trang trại\nelse if (messageLower.includes('trang trại') || messageLower.includes('farm') || messageLower.includes('đất') || messageLower.includes('diện tích')) {\n  intent = 'farms';\n}\n// Trợ giúp\nelse if (messageLower.includes('help') || messageLower.includes('trợ giúp') || messageLower.includes('hướng dẫn') || messageLower.includes('làm sao')) {\n  intent = 'help';\n}\n\nreturn { json: { message, intent, user_id } };"
+      },
+      "name": "Classify Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [272, 1280],
+      "id": "3c7dd125-e57e-4aed-8ef0-4a3f0f830fad"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "market_price"}]
+        }
+      },
+      "name": "IF: Market Price",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 976],
+      "id": "0ffe7f01-f925-447c-9945-8eec4ae8faf9"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "daily_tasks"}]
+        }
+      },
+      "name": "IF: Daily Tasks",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1088],
+      "id": "b0cc82e9-d3e4-46bd-87b7-12d5940a609d"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "recommendations"}]
+        }
+      },
+      "name": "IF: Recommendations",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1184],
+      "id": "56c82eca-4c44-443b-965d-c885c959d6d0"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "seasons"}]
+        }
+      },
+      "name": "IF: Seasons",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1280],
+      "id": "48ca847b-425d-4a53-9727-aea07c4957bb"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "alerts"}]
+        }
+      },
+      "name": "IF: Alerts",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1376],
+      "id": "95a3c8e0-58ba-42af-a1f6-5681d04395e5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "farms"}]
+        }
+      },
+      "name": "IF: Farms",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1488],
+      "id": "c60c92e1-fd1e-4e39-8ce9-db595030e574"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "help"}]
+        }
+      },
+      "name": "IF: Help",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1584],
+      "id": "94e48c7a-e521-4f31-a738-cd370ea355a1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{"value1": "={{$json.intent}}", "value2": "faq"}]
+        }
+      },
+      "name": "IF: FAQ",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 1680],
+      "id": "d3f3e6d5-0695-43fe-991a-683e8b75dfd5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.name AS crop_name, mp.price_avg, mp.market_location, mp.price_date FROM market_prices mp JOIN crops c ON mp.crop_id = c.id ORDER BY mp.price_date DESC LIMIT 5;",
+        "options": {}
+      },
+      "name": "Query: Prices",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 976],
+      "id": "201f883a-5794-430c-b122-43eb807c6c28",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT dt.task_name, dt.description, c.name as crop_name, dt.due_date FROM daily_tasks dt JOIN seasons s ON dt.season_id = s.id JOIN crops c ON s.crop_id = c.id JOIN farms f ON s.farm_id = f.id JOIN farmers fr ON f.farmer_id = fr.id WHERE fr.user_id = {{ $json.user_id }} AND dt.is_completed = false ORDER BY dt.due_date ASC LIMIT 10;",
+        "options": {}
+      },
+      "name": "Query: Tasks",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 1088],
+      "id": "51d6b0ee-dd8d-476a-b6e3-8633a8d266e7",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.name AS crop_name, pr.expected_price, pr.reason, pr.recommended_start_date, pr.priority_level FROM planting_recommendations pr JOIN crops c ON pr.crop_id = c.id WHERE pr.status = 'active' ORDER BY pr.priority_level ASC LIMIT 5;",
+        "options": {}
+      },
+      "name": "Query: Recommendations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 1184],
+      "id": "dfad5a92-0a10-483d-a8a6-014bdf9f5e79",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT s.season_code, c.name as crop_name, f.name as farm_name, s.status, s.start_date, s.expected_harvest_date, s.area_planted, s.expected_yield FROM seasons s JOIN crops c ON s.crop_id = c.id JOIN farms f ON s.farm_id = f.id JOIN farmers fr ON f.farmer_id = fr.id WHERE fr.user_id = {{ $json.user_id }} ORDER BY s.start_date DESC LIMIT 5;",
+        "options": {}
+      },
+      "name": "Query: Seasons",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 1280],
+      "id": "af9f1a44-2918-4383-a847-e68c682bc279",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT alert_type, severity, title, message, valid_from, valid_until FROM alerts WHERE is_active = true AND valid_until >= CURRENT_DATE ORDER BY severity DESC, valid_from DESC LIMIT 5;",
+        "options": {}
+      },
+      "name": "Query: Alerts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 1376],
+      "id": "7f1fc9b6-6353-44c1-858f-627ce777c962",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT f.name, f.area_hectare, f.soil_type, f.water_source, w.name as ward_name, d.name as district_name FROM farms f JOIN farmers fr ON f.farmer_id = fr.id LEFT JOIN wards w ON f.ward_id = w.id LEFT JOIN districts d ON w.district_id = d.id WHERE fr.user_id = {{ $json.user_id }};",
+        "options": {}
+      },
+      "name": "Query: Farms",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 1488],
+      "id": "d3938d5b-2847-43a3-8b85-3b50b05654c8",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT question, answer, category FROM faqs WHERE is_active = true ORDER BY view_count DESC LIMIT 5;",
+        "options": {}
+      },
+      "name": "Query: FAQ",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [704, 1680],
+      "id": "e5c6132e-1a2c-4ef6-bddb-df42a0a29559",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.crop_name) {\n  return { json: { answer: \"📊 Hiện tại chưa có dữ liệu giá thị trường.\" } };\n}\nlet response = \"📊 **Giá thị trường hôm nay:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  if (d.crop_name) {\n    const price = d.price_avg ? Math.round(d.price_avg).toLocaleString('vi-VN') : 'N/A';\n    response += `${i+1}. **${d.crop_name}**: ${price} đ/kg\\n   📍 ${d.market_location || 'Không xác định'}\\n\\n`;\n  }\n});\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Prices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 976],
+      "id": "853482f9-1c19-4ba2-9454-c858bf176772"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.task_name) {\n  return { json: { answer: \"✅ Tuyệt vời! Hiện tại bạn không có công việc nào cần làm.\" } };\n}\nlet response = \"✅ **Công việc cần làm:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  if (d.task_name) {\n    response += `${i+1}. **${d.task_name}**\\n`;\n    if (d.description) response += `   📝 ${d.description}\\n`;\n    response += `   🌱 Cây: ${d.crop_name || 'Không xác định'}\\n`;\n    if (d.due_date) response += `   📅 Hạn: ${d.due_date}\\n`;\n    response += `\\n`;\n  }\n});\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1088],
+      "id": "78511883-d6c2-417e-a3f7-b2a518e893fd"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.crop_name) {\n  return { json: { answer: \"🌾 Hiện tại chưa có khuyến nghị trồng trọt nào.\" } };\n}\nlet response = \"🌾 **Khuyến nghị trồng trọt:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  if (d.crop_name) {\n    const price = d.expected_price ? Math.round(d.expected_price).toLocaleString('vi-VN') : 'N/A';\n    const stars = '⭐'.repeat(Math.min(5 - (d.priority_level || 3) + 1, 5));\n    response += `${i+1}. **${d.crop_name}** ${stars}\\n`;\n    response += `   💰 Giá dự kiến: ${price} đ/kg\\n`;\n    response += `   📌 ${d.reason || 'Phù hợp với điều kiện địa phương'}\\n`;\n    if (d.recommended_start_date) response += `   🗓️ Bắt đầu: ${d.recommended_start_date}\\n`;\n    response += `\\n`;\n  }\n});\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Recommendations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1184],
+      "id": "837398c4-205c-4d4e-9f7c-c8f56bc22e3e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.season_code) {\n  return { json: { answer: \"🌱 Bạn chưa có vụ mùa nào đang hoạt động.\" } };\n}\nconst statusMap = {'planning': '📋 Lên kế hoạch', 'active': '🌿 Đang canh tác', 'harvesting': '🌾 Đang thu hoạch', 'completed': '✅ Hoàn thành', 'cancelled': '❌ Đã hủy'};\nlet response = \"🌱 **Tình trạng vụ mùa của bạn:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  const status = statusMap[d.status] || d.status;\n  response += `${i+1}. **${d.crop_name}** - ${d.farm_name}\\n`;\n  response += `   📊 Trạng thái: ${status}\\n`;\n  response += `   📅 Bắt đầu: ${d.start_date || 'Chưa xác định'}\\n`;\n  response += `   🎯 Dự kiến thu hoạch: ${d.expected_harvest_date || 'Chưa xác định'}\\n`;\n  if (d.area_planted) response += `   📐 Diện tích: ${d.area_planted} ha\\n`;\n  if (d.expected_yield) response += `   📦 Sản lượng dự kiến: ${d.expected_yield} tấn\\n`;\n  response += `\\n`;\n});\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Seasons",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1280],
+      "id": "79f46ee0-4aec-4451-a64d-0b5ddf13d529"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.title) {\n  return { json: { answer: \"✅ Hiện tại không có cảnh báo nào cho khu vực của bạn.\" } };\n}\nconst severityIcon = {'high': '🔴', 'medium': '🟡', 'low': '🟢'};\nlet response = \"⚠️ **Cảnh báo hiện tại:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  const icon = severityIcon[d.severity] || '⚪';\n  response += `${icon} **${d.title}**\\n`;\n  response += `   📋 ${d.message}\\n`;\n  response += `   🏷️ Loại: ${d.alert_type}\\n`;\n  if (d.valid_until) response += `   ⏰ Hiệu lực đến: ${d.valid_until}\\n`;\n  response += `\\n`;\n});\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1376],
+      "id": "6d389f5a-a033-420c-89e6-efd19fcc632b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.name) {\n  return { json: { answer: \"🏡 Bạn chưa đăng ký trang trại nào.\" } };\n}\nlet response = \"🏡 **Thông tin trang trại của bạn:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  response += `${i+1}. **${d.name}**\\n`;\n  response += `   📐 Diện tích: ${d.area_hectare || 'N/A'} ha\\n`;\n  response += `   🌍 Loại đất: ${d.soil_type || 'Chưa xác định'}\\n`;\n  response += `   💧 Nguồn nước: ${d.water_source || 'Chưa xác định'}\\n`;\n  if (d.ward_name) response += `   📍 Địa điểm: ${d.ward_name}, ${d.district_name || ''}\\n`;\n  response += `\\n`;\n});\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Farms",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1488],
+      "id": "1a97b26e-40fc-49b9-b1d2-47455921bc94"
+    },
+    {
+      "parameters": {
+        "jsCode": "let response = \"🤖 **Trợ giúp - AgriSupply Chatbot**\\n\\n\";\nresponse += \"Tôi có thể giúp bạn với các câu hỏi sau:\\n\\n\";\nresponse += \"📊 **Giá thị trường:** \\\"giá hôm nay\\\", \\\"giá rau\\\"\\n\";\nresponse += \"✅ **Công việc:** \\\"hôm nay làm gì\\\", \\\"công việc cần làm\\\"\\n\";\nresponse += \"🌾 **Khuyến nghị:** \\\"nên trồng gì\\\", \\\"gợi ý cây trồng\\\"\\n\";\nresponse += \"🌱 **Vụ mùa:** \\\"tiến độ vụ mùa\\\", \\\"khi nào thu hoạch\\\"\\n\";\nresponse += \"⚠️ **Cảnh báo:** \\\"cảnh báo thời tiết\\\", \\\"sâu bệnh\\\"\\n\";\nresponse += \"🏡 **Trang trại:** \\\"thông tin trang trại\\\", \\\"diện tích đất\\\"\\n\\n\";\nresponse += \"💡 Hãy hỏi tôi bất cứ điều gì liên quan đến nông nghiệp!\";\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: Help",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1584],
+      "id": "512bb336-df30-4604-8bca-d46f8a467bf4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0 || !data[0].json.question) {\n  return { json: { answer: \"❓ Xin lỗi, tôi không hiểu câu hỏi của bạn.\\n\\nGõ \\\"trợ giúp\\\" để xem danh sách các câu hỏi tôi có thể trả lời!\" } };\n}\nlet response = \"❓ **Câu hỏi thường gặp:**\\n\\n\";\ndata.forEach((item, i) => {\n  const d = item.json;\n  response += `**${i+1}. ${d.question}**\\n`;\n  response += `📝 ${d.answer}\\n`;\n  response += `🏷️ Danh mục: ${d.category}\\n\\n`;\n});\nresponse += \"\\n💡 Gõ \\\"trợ giúp\\\" để xem thêm các câu hỏi khác!\";\nreturn { json: { answer: response } };"
+      },
+      "name": "Format: FAQ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [928, 1680],
+      "id": "fb559231-d99a-4fcf-a87c-f1c7f5d7a584"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1152, 1280],
+      "id": "fda71aa6-1151-4894-aa57-f45bcf8513b1"
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "Classify Intent", "type": "main", "index": 0}]]},
+    "Classify Intent": {"main": [[{"node": "IF: Market Price", "type": "main", "index": 0}, {"node": "IF: Daily Tasks", "type": "main", "index": 0}, {"node": "IF: Recommendations", "type": "main", "index": 0}, {"node": "IF: Seasons", "type": "main", "index": 0}, {"node": "IF: Alerts", "type": "main", "index": 0}, {"node": "IF: Farms", "type": "main", "index": 0}, {"node": "IF: Help", "type": "main", "index": 0}, {"node": "IF: FAQ", "type": "main", "index": 0}]]},
+    "IF: Market Price": {"main": [[{"node": "Query: Prices", "type": "main", "index": 0}]]},
+    "IF: Daily Tasks": {"main": [[{"node": "Query: Tasks", "type": "main", "index": 0}]]},
+    "IF: Recommendations": {"main": [[{"node": "Query: Recommendations", "type": "main", "index": 0}]]},
+    "IF: Seasons": {"main": [[{"node": "Query: Seasons", "type": "main", "index": 0}]]},
+    "IF: Alerts": {"main": [[{"node": "Query: Alerts", "type": "main", "index": 0}]]},
+    "IF: Farms": {"main": [[{"node": "Query: Farms", "type": "main", "index": 0}]]},
+    "IF: Help": {"main": [[{"node": "Format: Help", "type": "main", "index": 0}]]},
+    "IF: FAQ": {"main": [[{"node": "Query: FAQ", "type": "main", "index": 0}]]},
+    "Query: Prices": {"main": [[{"node": "Format: Prices", "type": "main", "index": 0}]]},
+    "Query: Tasks": {"main": [[{"node": "Format: Tasks", "type": "main", "index": 0}]]},
+    "Query: Recommendations": {"main": [[{"node": "Format: Recommendations", "type": "main", "index": 0}]]},
+    "Query: Seasons": {"main": [[{"node": "Format: Seasons", "type": "main", "index": 0}]]},
+    "Query: Alerts": {"main": [[{"node": "Format: Alerts", "type": "main", "index": 0}]]},
+    "Query: Farms": {"main": [[{"node": "Format: Farms", "type": "main", "index": 0}]]},
+    "Query: FAQ": {"main": [[{"node": "Format: FAQ", "type": "main", "index": 0}]]},
+    "Format: Prices": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: Tasks": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: Recommendations": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: Seasons": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: Alerts": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: Farms": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: Help": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]},
+    "Format: FAQ": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]}
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "agrisupply-chatbot-v1"
+  }
+}

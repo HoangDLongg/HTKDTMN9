@@ -8,7 +8,7 @@ from apps.core.views import RolesViewSet, UsersViewSet
 from apps.locations.views import ProvincesViewSet, DistrictsViewSet, WardsViewSet
 from apps.crops.views import CropsViewSet, TechnicalProcessesViewSet, ProcessStagesViewSet, StageTasksViewSet
 from apps.farms.views import CooperativesViewSet, FarmersViewSet, FarmsViewSet
-from apps.seasons.views import SeasonsViewSet, DailyTasksViewSet, FarmingLogsViewSet
+from apps.seasons.views import SeasonsViewSet, DailyTasksViewSet, FarmingLogsViewSet, SeasonRegistrationViewSet
 from apps.market.views import PriceSourcesViewSet, MarketPricesViewSet, DemandForecastsViewSet, PlantingRecommendationsViewSet
 from apps.chatbot.views import ChatLogsViewSet, FaqsViewSet, AlertsViewSet, NotificationsViewSet
 
@@ -33,12 +33,13 @@ router.register(r'stage-tasks', StageTasksViewSet)
 # Farms
 router.register(r'cooperatives', CooperativesViewSet)
 router.register(r'farmers', FarmersViewSet)
-router.register(r'farms', FarmsViewSet)
+router.register(r'farms', FarmsViewSet, basename='farms')
 
 # Seasons
 router.register(r'seasons', SeasonsViewSet)
 router.register(r'daily-tasks', DailyTasksViewSet)
 router.register(r'farming-logs', FarmingLogsViewSet)
+router.register(r'season-registrations', SeasonRegistrationViewSet)
 
 # Market
 router.register(r'price-sources', PriceSourcesViewSet)
@@ -51,3 +52,4 @@ router.register(r'chat-logs', ChatLogsViewSet)
 router.register(r'faqs', FaqsViewSet)
 router.register(r'alerts', AlertsViewSet)
 router.register(r'notifications', NotificationsViewSet)
+

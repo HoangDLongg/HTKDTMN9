@@ -1,0 +1,235 @@
+{
+  "name": "Weather Alert System",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Daily 6AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "id": "schedule-trigger-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT\n  w.name as ward_name,\n  w.latitude,\n  w.longitude,\n  d.name as district_name,\n  COUNT(DISTINCT f.id) as farm_count,\n  COUNT(DISTINCT fr.user_id) as farmer_count\nFROM wards w\nJOIN districts d ON w.district_id = d.id\nJOIN farms f ON f.ward_id = w.id\nJOIN farmers fr ON f.farmer_id = fr.id\nWHERE w.latitude IS NOT NULL AND w.longitude IS NOT NULL\nGROUP BY w.id, w.name, w.latitude, w.longitude, d.name\nORDER BY farm_count DESC;",
+        "options": {}
+      },
+      "name": "Get Farm Locations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "query-locations-001",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare array to collect all weather checks\nconst locations = $input.all();\nconst results = [];\n\nfor (const item of locations) {\n  const location = item.json;\n  results.push({\n    json: {\n      ward_name: location.ward_name,\n      district_name: location.district_name,\n      latitude: location.latitude,\n      longitude: location.longitude,\n      farm_count: location.farm_count,\n      farmer_count: location.farmer_count\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Process Locations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "id": "process-locations-001"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openweathermap.org/data/2.5/forecast?lat={{$json.latitude}}&lon={{$json.longitude}}&appid=8e054550351ac98ddb1c99ddb6e5adcd&units=metric&lang=vi",
+        "options": {}
+      },
+      "name": "Get Weather Forecast",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 300],
+      "id": "http-weather-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const location = $input.item.json;\nconst forecast = $input.item.json;\n\n// Analyze next 24 hours (8 intervals x 3 hours)\nconst forecasts = forecast.list ? forecast.list.slice(0, 8) : [];\n\nlet hasRain = false;\nlet hasStorm = false;\nlet hasHeavyRain = false;\nlet maxRain = 0;\nlet maxWind = 0;\nlet alerts = [];\n\nfor (const item of forecasts) {\n  const weather = item.weather[0];\n  const rain = item.rain ? item.rain['3h'] || 0 : 0;\n  const wind = item.wind ? item.wind.speed || 0 : 0;\n  \n  // Check for rain (id 5xx)\n  if (weather.id >= 500 && weather.id < 600) {\n    hasRain = true;\n    if (rain > maxRain) maxRain = rain;\n    \n    // Heavy rain: > 7mm/3h\n    if (rain > 7) {\n      hasHeavyRain = true;\n    }\n  }\n  \n  // Check for thunderstorm (id 2xx)\n  if (weather.id >= 200 && weather.id < 300) {\n    hasStorm = true;\n  }\n  \n  // Check for strong wind (> 10 m/s = 36 km/h)\n  if (wind > 10) {\n    if (wind > maxWind) maxWind = wind;\n  }\n}\n\n// Determine severity and create alert message\nlet severity = 'low';\nlet alertType = 'weather';\nlet title = '';\nlet message = '';\n\nif (hasStorm || hasHeavyRain || maxWind > 15) {\n  severity = 'high';\n  \n  if (hasStorm) {\n    alertType = 'storm';\n    title = `⚠️ CẢNH BÁO BÃO - ${location.ward_name}, ${location.district_name}`;\n    message = `Dự báo có dông/bão trong 24h tới.`;\n  } else if (hasHeavyRain) {\n    alertType = 'heavy_rain';\n    title = `🌧️ CẢNH BÁO MƯA LỚN - ${location.ward_name}, ${location.district_name}`;\n    message = `Dự báo mưa lớn ${maxRain.toFixed(1)}mm/3h trong 24h tới.`;\n  } else if (maxWind > 15) {\n    alertType = 'strong_wind';\n    title = `💨 CẢNH BÁO GIÓ MẠNH - ${location.ward_name}, ${location.district_name}`;\n    message = `Dự báo gió mạnh ${maxWind.toFixed(1)} m/s (${(maxWind * 3.6).toFixed(0)} km/h).`;\n  }\n  \n  message += `\\n\\n📍 Khu vực: ${location.ward_name}, ${location.district_name}`;\n  message += `\\n🏡 Ảnh hưởng: ${location.farm_count} trang trại, ${location.farmer_count} nông dân`;\n  message += `\\n\\n⚠️ Khuyến cáo:`;\n  \n  if (hasStorm) {\n    message += `\\n- Gia cố nhà kính, lưới che`;\n    message += `\\n- Thoát nước cho ruộng`;\n    message += `\\n- Không sử dụng thuốc BVTV`;\n  } else if (hasHeavyRain) {\n    message += `\\n- Kiểm tra hệ thống thoát nước`;\n    message += `\\n- Không tưới cây`;\n    message += `\\n- Che chắn cho cây non`;\n  } else if (maxWind > 15) {\n    message += `\\n- Chằng chống giàn leo`;\n    message += `\\n- Gia cố lưới che`;\n    message += `\\n- Thu hoạch sớm nếu gần đến kỳ`;\n  }\n  \n} else if (hasRain) {\n  severity = 'medium';\n  alertType = 'rain';\n  title = `🌦️ Thông báo thời tiết - ${location.ward_name}, ${location.district_name}`;\n  message = `Dự báo có mưa trong 24h tới.`;\n  message += `\\n📍 Khu vực: ${location.ward_name}, ${location.district_name}`;\n  message += `\\n💡 Lưu ý: Điều chỉnh lịch tưới cây và phun thuốc.`;\n}\n\n// Return result\nif (title) {\n  const now = new Date();\n  const validUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000); // +24h\n  \n  return {\n    json: {\n      should_alert: true,\n      alert_type: alertType,\n      severity: severity,\n      title: title,\n      message: message,\n      ward_name: location.ward_name,\n      district_name: location.district_name,\n      valid_from: now.toISOString(),\n      valid_until: validUntil.toISOString(),\n      is_active: true,\n      max_rain: maxRain,\n      max_wind: maxWind,\n      farm_count: location.farm_count,\n      farmer_count: location.farmer_count\n    }\n  };\n} else {\n  return {\n    json: {\n      should_alert: false,\n      ward_name: location.ward_name,\n      message: 'Thời tiết bình thường'\n    }\n  };\n}"
+      },
+      "name": "Analyze Weather",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "id": "analyze-weather-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.should_alert}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "IF Alert Needed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "id": "if-alert-001"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO alerts (alert_type, severity, title, message, valid_from, valid_until, is_active, created_at)\nVALUES (\n  '{{$json.alert_type}}',\n  '{{$json.severity}}',\n  '{{$json.title}}',\n  '{{$json.message}}',\n  '{{$json.valid_from}}',\n  '{{$json.valid_until}}',\n  {{$json.is_active}},\n  NOW()\n)\nRETURNING id;",
+        "options": {}
+      },
+      "name": "Create Alert",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1560, 200],
+      "id": "create-alert-001",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=-- Get farmers affected by this weather alert\nWITH affected_farmers AS (\n  SELECT DISTINCT fr.user_id\n  FROM farmers fr\n  JOIN farms f ON f.farmer_id = fr.id\n  JOIN wards w ON f.ward_id = w.id\n  JOIN districts d ON w.district_id = d.id\n  WHERE w.name = '{{$node[\"Analyze Weather\"].json.ward_name}}'\n    AND d.name = '{{$node[\"Analyze Weather\"].json.district_name}}'\n)\nINSERT INTO notifications (user_id, alert_id, channel, status, sent_at)\nSELECT \n  user_id,\n  {{$node[\"Create Alert\"].json.id}},\n  'system',\n  'sent',\n  NOW()\nFROM affected_farmers\nRETURNING id, user_id;",
+        "options": {}
+      },
+      "name": "Send Notifications",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1780, 200],
+      "id": "send-notifications-001",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const alertData = $node[\"Analyze Weather\"].json;\nconst alertId = $node[\"Create Alert\"].json.id;\nconst notifications = $input.all();\n\nreturn {\n  json: {\n    success: true,\n    alert_id: alertId,\n    alert_type: alertData.alert_type,\n    severity: alertData.severity,\n    location: `${alertData.ward_name}, ${alertData.district_name}`,\n    affected_farms: alertData.farm_count,\n    affected_farmers: alertData.farmer_count,\n    notifications_sent: notifications.length,\n    message: alertData.title,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Log Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2000, 200],
+      "id": "log-success-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const location = $input.item.json;\nreturn {\n  json: {\n    skipped: true,\n    location: `${location.ward_name}`,\n    reason: location.message || 'No severe weather',\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Log Skip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1560, 400],
+      "id": "log-skip-001"
+    }
+  ],
+  "connections": {
+    "Schedule Daily 6AM": {
+      "main": [
+        [
+          {
+            "node": "Get Farm Locations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Farm Locations": {
+      "main": [
+        [
+          {
+            "node": "Process Locations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Locations": {
+      "main": [
+        [
+          {
+            "node": "Get Weather Forecast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weather Forecast": {
+      "main": [
+        [
+          {
+            "node": "Analyze Weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Weather": {
+      "main": [
+        [
+          {
+            "node": "IF Alert Needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Alert Needed": {
+      "main": [
+        [
+          {
+            "node": "Create Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Notifications": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-01-17T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -1,6 +1,41 @@
 from django.db import models
 
 
+class CropDocuments(models.Model):
+    """Tài liệu kỹ thuật cây trồng"""
+    DOCUMENT_TYPES = [
+        ('guide', 'Hướng dẫn kỹ thuật'),
+        ('manual', 'Sổ tay canh tác'),
+        ('video', 'Video hướng dẫn'),
+        ('research', 'Nghiên cứu khoa học'),
+        ('regulation', 'Quy định/Tiêu chuẩn'),
+        ('other', 'Khác')
+    ]
+    
+    crop = models.ForeignKey('crops.Crops', on_delete=models.CASCADE, related_name='documents', blank=True, null=True)
+    title = models.CharField(max_length=500)
+    document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES, default='guide')
+    description = models.TextField(blank=True, null=True)
+    file_url = models.CharField(max_length=1000, blank=True, null=True)
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    file_size = models.IntegerField(blank=True, null=True)
+    external_link = models.CharField(max_length=1000, blank=True, null=True)
+    author = models.CharField(max_length=255, blank=True, null=True)
+    source = models.CharField(max_length=255, blank=True, null=True)
+    publish_date = models.DateField(blank=True, null=True)
+    is_public = models.BooleanField(default=True)
+    cooperative = models.ForeignKey('farms.Cooperatives', on_delete=models.SET_NULL, blank=True, null=True)
+    view_count = models.IntegerField(default=0)
+    download_count = models.IntegerField(default=0)
+    uploaded_by = models.ForeignKey('core.Users', on_delete=models.SET_NULL, null=True, related_name='uploaded_documents')
+    created_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        managed = False
+        db_table = 'crop_documents'
+
+
 class Crops(models.Model):
     code = models.CharField(unique=True, max_length=50)
     name = models.CharField(max_length=255)

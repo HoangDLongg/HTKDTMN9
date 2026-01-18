@@ -26,6 +26,10 @@ class SeasonService:
         Returns:
             Created Season instance with all daily tasks
         """
+        # Validate that process is not None
+        if not process:
+            raise ValueError("Technical process is required to create a season")
+        
         # Generate season code
         season_code = f"SS-{farm.id}-{crop.code}-{start_date.strftime('%Y%m%d')}"
         
