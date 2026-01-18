@@ -314,5 +314,5 @@ export default function AdminReportsPage() {
                 </div>
             </main>
         </div>
-    );
+    );//vi trung
 }
